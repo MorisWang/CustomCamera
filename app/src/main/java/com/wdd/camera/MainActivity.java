@@ -156,15 +156,15 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             List<Camera.Size> pictureSizes = parameters.getSupportedPictureSizes();
             List<String> focusModes = parameters.getSupportedFocusModes();
 
-            Camera.Size previewSize = getOptimalPreviewSize(previewSizes, screenWidth, screenHeight);
-            Camera.Size pictureSize = getOptimalPreviewSize(pictureSizes, screenWidth, screenHeight);
+            Camera.Size previewSize = CameraUtils.getOptimalPreviewSize(previewSizes, screenWidth, screenHeight);
+            Camera.Size pictureSize = CameraUtils.getOptimalPreviewSize(pictureSizes, screenWidth, screenHeight);
 
             parameters.setPreviewSize(previewSize.width, previewSize.height);
             parameters.setPictureSize(pictureSize.width, pictureSize.height);
             if(focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)){
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             }
-            parameters.setRotation(getPhotoDegree());
+            parameters.setRotation(CameraUtils.getPhotoDegree(isBackCameraOn));
 
             mCamera.setDisplayOrientation(90);
             mCamera.setParameters(parameters);
@@ -174,49 +174,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }catch (Exception e){
             e.printStackTrace();
         }
-    }
-
-    //获取照片旋转的角度
-    private int getPhotoDegree() {
-        if (isBackCameraOn) {
-            //后置摄像头
-            return 90;
-        } else {
-            //前置摄像头
-            return 270;
-        }
-    }
-
-    //获取合适的尺寸
-    public static Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h){
-        final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio = (double) w / h;
-        if (sizes == null) return null;
-
-        Camera.Size optimalSize = null;
-        double minDiff = Double.MAX_VALUE;
-
-        int targetHeight = h;
-
-        for (Camera.Size size : sizes) {
-            double ratio = (double) size.width / size.height;
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
-            if (Math.abs(size.height - targetHeight) < minDiff) {
-                optimalSize = size;
-                minDiff = Math.abs(size.height - targetHeight);
-            }
-        }
-
-        if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
-            for (Camera.Size size : sizes) {
-                if (Math.abs(size.height - targetHeight) < minDiff) {
-                    optimalSize = size;
-                    minDiff = Math.abs(size.height - targetHeight);
-                }
-            }
-        }
-        return optimalSize;
     }
 
     //切换前后摄像头
@@ -305,15 +262,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
     };
 
-    public static boolean checkHardware(Context mContext){
-        return mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_CAMERA);
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        if (checkHardware(MainActivity.this) && mCamera == null) {
+        if (CameraUtils.checkHardware(MainActivity.this) && mCamera == null) {
             //判断前后摄像头
             int cameraCount;
             Camera.CameraInfo cameraInfo = new Camera.CameraInfo();

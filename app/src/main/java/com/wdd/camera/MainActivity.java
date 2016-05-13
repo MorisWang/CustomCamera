@@ -16,6 +16,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback{
@@ -91,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         findViewById(R.id.take_photo).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                takePhoto();
             }
         });
     }
@@ -122,6 +125,19 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         public void onPictureTaken(byte[] data, Camera camera) {
             startPreview();
             //TODO:保存图片
+            File photoFile = CameraUtils.getPhoto();
+            if(photoFile == null){
+                startPreview();
+                return;
+            }
+
+            try {
+                FileOutputStream fos = new FileOutputStream(photoFile);
+                fos.write(data);
+                fos.close();
+            }catch (IOException e){
+
+            }
         }
     };
 
@@ -148,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             if(focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)){
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             }
+            parameters.setRotation(getPhotoDegree());
 
             mCamera.setDisplayOrientation(90);
             mCamera.setParameters(parameters);
@@ -156,6 +173,17 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         }catch (Exception e){
             e.printStackTrace();
+        }
+    }
+
+    //获取照片旋转的角度
+    private int getPhotoDegree() {
+        if (isBackCameraOn) {
+            //后置摄像头
+            return 90;
+        } else {
+            //前置摄像头
+            return 270;
         }
     }
 
